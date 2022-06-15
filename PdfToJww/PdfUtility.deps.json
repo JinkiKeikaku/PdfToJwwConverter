@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "PdfUtility/0.1.3": {
+        "runtime": {
+          "PdfUtility.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "PdfUtility/0.1.3": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
