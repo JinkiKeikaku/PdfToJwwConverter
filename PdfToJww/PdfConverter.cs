@@ -3,14 +3,16 @@ using System.Reflection;
 using System.Text;
 using static PdfToJww.CadMath2D.CadMath;
 using PdfToJww.CadMath2D;
+using PdfToJww.Shape;
+using System.IO.Compression;
+using JwwHelper;
 
 namespace PdfToJww
 {
     public class PdfConverter
     {
-        public double CombineRate = 0.8;
-        public double SpaceRate = 0.7;
-
+        public double CombineRate = 1.0;
+        public double SpaceRate = 0.6;
 
 
         public PdfConverter()
@@ -60,54 +62,56 @@ namespace PdfToJww
         /// <exception cref="Exception">
         /// 暗号化されている場合、変換失敗時に例外が発生します。
         /// </exception>
-        public void Convert(string pdfPath, int pageNumber, string jwwPath, bool combineText)
+        public void Convert(string pdfPath, int pageNumber, string jwwPath, bool combineText, bool unifyKanji)
         {
             using var pdfDoc = new PdfUtility.PdfDocument();
             pdfDoc.Open(new FileStream(pdfPath, FileMode.Open, FileAccess.Read, FileShare.Read));
             if (pdfDoc.IsEncrypt()) throw new Exception("This PDF file is encrypted. So cannot open.");
-            var datas = new List<JwwHelper.JwwData>();
-            var page = ReadPage(pdfDoc, pageNumber, datas, combineText);
-            var jw = new JwwHelper.JwwWriter();
+
+            var shapes = new List<PShape>();
+            var page = ReadPage(pdfDoc, pageNumber, shapes, combineText, unifyKanji);
+            var writer = new JwwHelper.JwwWriter();
             var tmp = Path.GetTempFileName();
             var buf = Properties.Resources.template;
             File.WriteAllBytes(tmp, buf);
-            jw.InitHeader(tmp);
+            writer.InitHeader(tmp);
             File.Delete(tmp);
 
-            FitToPaper(page, jw, datas);
-            foreach (var s in datas)
+            var jwwPaperSize = Helper.GetJwwPaperSize(writer.Header.m_nZumen);
+
+            FitToPaper(page, jwwPaperSize, shapes);
+            foreach (var shape in shapes)
             {
-                jw.AddData(s);
+                var s = ConvertToJwwData(writer, shape);
+                if (s != null) writer.AddData(s);
             }
-            jw.Write(jwwPath);
+            writer.Write(jwwPath);
         }
-        PdfPage ReadPage(PdfDocument doc, int pageNumber, List<JwwHelper.JwwData> datas, bool combineText)
+
+        PdfPage ReadPage(PdfDocument doc, int pageNumber, List<PShape> shapes, bool combineText, bool unifyKanji)
         {
             //PDFは左下が原点
             var page = doc.GetPage(pageNumber - 1);
             var graphicStack = new Stack<ContentsReader.GraphicState>();
             graphicStack.Push(new ContentsReader.GraphicState());
             var resource = page.ResourcesDictionary;
-            var contentsReader = new ContentsReader(doc, resource, graphicStack);
+            var contentsReader = new ContentsReader(doc, resource, graphicStack, unifyKanji);
             foreach (var c in page.ContentsList)
             {
                 if (c != null)
                 {
-                    var shapes = contentsReader.Read(c);
-                    if(combineText)   CombineText(shapes);
-                    foreach (var shape in shapes)
+                    var ss = contentsReader.Read(c);
+                    if (combineText) CombineText(ss);
+                    foreach (var shape in ss)
                     {
-                        if (shape != null)
-                        {
-                            datas.Add(shape);
-                        }
+                        if (shape != null) shapes.Add(shape);
                     }
                 }
             }
             return page;
         }
 
-        void FitToPaper(PdfPage page, JwwHelper.JwwWriter jw, List<JwwHelper.JwwData> datas)
+        void FitToPaper(PdfPage page, CadSize paperSize, List<PShape> shapes)
         {
             var dpr = new CadPoint();
             var rotate = -page.Attribute.Rotate / 180.0 * Math.PI;
@@ -120,63 +124,135 @@ namespace PdfToJww
             }
             var scale = 25.4 / 72.0;
             var p0 = new CadPoint(0, 0);
-            var jwwPaperSize = Helper.GetJwwPaperSize(jw.Header.m_nZumen);
-            var dp = new CadPoint(jwwPaperSize.Width / 2.0, jwwPaperSize.Height / 2.0);
-            foreach (var s in datas)
+            var dp = new CadPoint(paperSize.Width / 2.0, paperSize.Height / 2.0);
+            foreach (var s in shapes)
             {
                 if (rotate != 0.0)
                 {
-                    Helper.RotateJwwShape(s, p0, rotate);
-                    Helper.OffsetJwwShape(s, dpr);
+                    s.Rotate(p0, rotate);
+                    s.Offset(dpr);
                 }
-                Helper.ScaleJwwShape(s, p0, scale);
-                Helper.OffsetJwwShape(s, -dp);
+                s.Magnify(p0, scale, scale);
+                s.Offset(-dp);
             }
         }
 
+        JwwHelper.JwwData? ConvertToJwwData(JwwWriter writer, PShape shape)
+        {
+            switch (shape)
+            {
+                case PLineShape line:
+                    {
+                        var jw = new JwwHelper.JwwSen();
+                        jw.m_start_x = line.P0.X;
+                        jw.m_start_y = line.P0.Y;
+                        jw.m_end_x = line.P1.X;
+                        jw.m_end_y = line.P1.Y;
+                        return jw;
+                    }
+                case PTextShape text:
+                    {
+                        var jw = new JwwHelper.JwwMoji();
+                        jw.m_string = text.Text;
+                        jw.m_strFontName = text.FontName;
+                        jw.m_dSizeY = text.Height;//フォント高さ
+                        jw.m_dSizeX = text.Height;//フォント幅
+                        jw.m_degKakudo = text.AngleDeg;
+                        jw.m_start_x = text.P0.X;
+                        jw.m_start_y = text.P0.Y;
+                        var p2 = text.P0 + CadPoint.Pole(text.Width, DegToRad(text.AngleDeg));
+                        jw.m_end_x = p2.X;
+                        jw.m_end_y = p2.Y;
+                        return jw;
+                    }
+                    case PImageShape image:
+                    {
+                        var (name, gzName, buffer) = CreateJwwImageInfo(image);
+                        if (buffer != null)
+                        {
+                            var img = JwwImage.Create(gzName, buffer);
+                            writer.AddImage(img);
+                            var moji = new JwwMoji();
+                            //JwwMojiのほうはそのままの名前
+                            moji.m_string = name;
+                            moji.m_degKakudo = image.AngleDeg;
+                            moji.m_dSizeX = 2;
+                            moji.m_dSizeY = 2;
+                            var w = PTextShape.GetTextWidth(name, moji.m_dSizeY);
+                            var pe = new CadPoint(w, 0);
+                            pe.Rotate(DegToRad(image.AngleDeg));
+                            moji.m_start_x = image.P0.X;
+                            moji.m_start_y = image.P0.Y;
+                            moji.m_end_x = moji.m_start_x + pe.X;
+                            moji.m_end_y = moji.m_start_y + pe.Y;
+                            moji.m_strFontName = "ＭＳ ゴシック";//決め打ち
+                            return moji;
+                        }
+                        return null;
+                    }
+            }
+            return null;
+        }
+
+        static int mImageNameIndex = 0;
+        const string mImageNamePrefix = "image_";
+        //"^@BM%temp%V__Picture_Towada20160803_IMG_0193_JPG.bmp,100,75,0,0,1,0"
+        //100,75,0,0,1,0 => width,height, ?, ?, ?, amgle
+        (string name, string gzName, byte[] buffer) CreateJwwImageInfo(PImageShape imageShape)
+        {
+            var bmName = $"C__Picture__{mImageNamePrefix + mImageNameIndex}.bmp";
+
+            var name = $"^@BM%temp%{bmName},{imageShape.Width},{imageShape.Height},0,0,1,{imageShape.AngleDeg}";
+            var gzName = bmName + ".gz";
+            mImageNameIndex++;
+            using var ws = new MemoryStream();
+#pragma warning disable CA1416 // プラットフォームの互換性を検証
+            imageShape.Image.Save(ws, System.Drawing.Imaging.ImageFormat.Bmp);
+#pragma warning restore CA1416 // プラットフォームの互換性を検証
+            var buffer = ws.GetBuffer();
+            using var dst = new MemoryStream();
+            using var gz = new GZipStream(dst, CompressionLevel.Optimal);
+            gz.Write(buffer, 0, buffer.Length);
+            gz.Close();
+            return (name, gzName, dst.GetBuffer());
+        }
 
 
-        void CombineText(List<JwwHelper.JwwData?> shapes)
+        void CombineText(List<PShape?> shapes)
         {
             var j = -1;
-            JwwHelper.JwwMoji s2 = null!;
+            PTextShape s2 = null!;
             for (var i = shapes.Count - 1; i >= 0; i--)
             {
-                var s1 = shapes[i] as JwwHelper.JwwMoji;
-                if (s1 != null && !s1.m_string.StartsWith("^@BM"))
+                var s1 = shapes[i] as PTextShape;
+                if (s1 == null) continue;
+                if (j >= 0)
                 {
-                    if (j < 0)
+                    if (FloatEQ(s1.AngleDeg, s2.AngleDeg) &&
+                        FloatEQ(s1.Height, s2.Height) &&
+                        s1.Color == s2.Color)
                     {
-                        j = i;
-                        s2 = s1;
-                        continue;
-                    }
-                    if (FloatEQ(s1.m_degKakudo, s2.m_degKakudo) &&
-                        FloatEQ(s1.m_dSizeY, s2.m_dSizeY) &&
-                        s1.m_nPenColor == s2.m_nPenColor)
-                    {
-                        var h = s1.m_dSizeY;
-                        var a = DegToRad(s1.m_degKakudo);
-                        var p1 = new CadPoint(s1.m_end_x, s1.m_end_y);
-                        var p2 = new CadPoint(s2.m_start_x, s2.m_start_y);
+                        var h = s1.Height;
+                        var w = s1.Width;
+                        var a = DegToRad(s1.AngleDeg);
+                        var p0 = s1.P0.Copy();
+                        var p1 = (p0 + new CadPoint(w, 0)).RotatePoint(p0, -a);
+                        var p2 = s2.P0.RotatePoint(p0, -a);
                         var dp = p2 - p1;
                         var dr = dp.Hypot();
                         if (dr < CombineRate * h)
-                        {
-                            var t = s1.m_string;
+//                            if (FloatEQ(dp.Y, 0.0) && dr < CombineRate * h)
+                            {
+                                var t = s1.Text;
                             if (dr > SpaceRate * h) t += " ";
-                            s1.m_string = t + s2.m_string;
-                            var w = ContentsReader.GetTextWidth(s1.m_string, s1.m_dSizeY);
-                            var p02 = p1 + CadPoint.Pole(w, DegToRad(s1.m_degKakudo));
-                            s1.m_end_x = p02.X;
-                            s1.m_end_y = p02.Y;
+                            s1.Text = t + s2.Text;
                             shapes[i] = s1;
                             shapes[j] = null;
                         }
                     }
-                    j = i;
-                    s2 = s1;
                 }
+                j = i;
+                s2 = s1;
             }
         }
     }

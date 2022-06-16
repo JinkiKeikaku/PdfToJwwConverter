@@ -1,10 +1,12 @@
 ﻿using PdfToJww.CadMath2D;
 using PdfUtility;
 using System.Diagnostics;
-using System.Text;
+using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace PdfToJww
 {
+#pragma warning disable CA1416 // プラットフォームの互換性を検証
     static class Helper
     {
 
@@ -28,93 +30,6 @@ namespace PdfToJww
             return num.DoubleValue;
         }
 
-
-        public static void OffsetJwwShape(JwwHelper.JwwData data, CadPoint dp)
-        {
-            switch (data)
-            {
-                case JwwHelper.JwwSen s:
-                    {
-                        s.m_start_x += dp.X;
-                        s.m_start_y += dp.Y;
-                        s.m_end_x += dp.X;
-                        s.m_end_y += dp.Y;
-                    }
-                    break;
-                case JwwHelper.JwwMoji s:
-                    {
-                        s.m_start_x += dp.X;
-                        s.m_start_y += dp.Y;
-                        s.m_end_x += dp.X;
-                        s.m_end_y += dp.Y;
-                    }
-                    break;
-            }
-        }
-
-        public static void ScaleJwwShape(JwwHelper.JwwData data, CadPoint p0, double scale)
-        {
-            switch (data)
-            {
-                case JwwHelper.JwwSen s:
-                    {
-                        var p1 = new CadPoint(s.m_start_x, s.m_start_y);
-                        var p2 = new CadPoint(s.m_end_x, s.m_end_y);
-                        p1.Magnify(p0, scale, scale);
-                        p2.Magnify(p0, scale, scale);
-                        s.m_start_x = p1.X;
-                        s.m_start_y = p1.Y;
-                        s.m_end_x = p2.X;
-                        s.m_end_y = p2.Y;
-                    }
-                    break;
-                case JwwHelper.JwwMoji s:
-                    {
-                        var p1 = new CadPoint(s.m_start_x, s.m_start_y);
-                        var p2 = new CadPoint(s.m_end_x, s.m_end_y);
-                        p1.Magnify(p0, scale, scale);
-                        p2.Magnify(p0, scale, scale);
-                        s.m_start_x = p1.X;
-                        s.m_start_y = p1.Y;
-                        s.m_end_x = p2.X;
-                        s.m_end_y = p2.Y;
-                        s.m_dSizeX *= scale;
-                        s.m_dSizeY *= scale;
-                    }
-                    break;
-            }
-        }
-
-        public static void RotateJwwShape(JwwHelper.JwwData data, CadPoint p0, double rad)
-        {
-            switch (data)
-            {
-                case JwwHelper.JwwSen s:
-                    {
-                        var p1 = new CadPoint(s.m_start_x, s.m_start_y);
-                        var p2 = new CadPoint(s.m_end_x, s.m_end_y);
-                        p1.Rotate(p0, rad);
-                        p2.Rotate(p0, rad);
-                        s.m_start_x = p1.X;
-                        s.m_start_y = p1.Y;
-                        s.m_end_x = p2.X;
-                        s.m_end_y = p2.Y;
-                    }
-                    break;
-                case JwwHelper.JwwMoji s:
-                    {
-                        var p1 = new CadPoint(s.m_start_x, s.m_start_y);
-                        var p2 = new CadPoint(s.m_end_x, s.m_end_y);
-                        p1.Rotate(p0, rad);
-                        p2.Rotate(p0, rad);
-                        s.m_start_x = p1.X;
-                        s.m_start_y = p1.Y;
-                        s.m_end_x = p2.X;
-                        s.m_end_y = p2.Y;
-                    }
-                    break;
-            }
-        }
 
 
         static public CadSize GetJwwPaperSize(int code)
@@ -143,6 +58,142 @@ namespace PdfToJww
             new CadSize(50000.0, 35355.0),  //13:50m
             new CadSize(100000.0, 70711.0)  //14:100m
         };
+
+
+        public enum ImageType
+        {
+            None,
+            BGR,    //Windows
+            RGB,    //PNG
+            CMYK,    //CMYK
+            Gray,   //8bit
+        }
+
+        public static Bitmap CtreateImageFromRaw(this byte[] src, int width, int height, ImageType imageType)
+        {
+            switch (imageType)
+            {
+                case ImageType.BGR:
+                    return CtreateImageFromBGR(src, width, height);
+                case ImageType.RGB:
+                    return CtreateImageFromRGB(src, width, height);
+                case ImageType.CMYK:
+                    return CtreateImageFromCMYK(src, width, height);
+                case ImageType.Gray:
+                    return CtreateImageFromGray(src, width, height);
+            }
+            throw new Exception($"CtreateImageFromRaw Unknown image type {imageType}");
+
+        }
+
+        private static Bitmap CtreateImageFromRGB(byte[] src, int width, int height)
+        {
+            var output = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            var rect = new Rectangle(0, 0, width, height);
+            var bmpData = output.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, output.PixelFormat);
+            var arrRowLength = bmpData.Stride;
+            var ptr = bmpData.Scan0;
+            var buf = new byte[arrRowLength];
+            var w3 = width * 3;
+            for (var y = 0; y < height; y++)
+            {
+                var srcTop = y * w3;
+                for (var x = 0; x < w3; x += 3)
+                {
+                    buf[x] = src[srcTop + x + 2];
+                    buf[x + 1] = src[srcTop + x + 1];
+                    buf[x + 2] = src[srcTop + x];
+                }
+                Marshal.Copy(buf, 0, ptr, arrRowLength);
+                ptr += arrRowLength;
+            }
+            output.UnlockBits(bmpData);
+            return output;
+        }
+        private static Bitmap CtreateImageFromBGR(byte[] src, int width, int height)
+        {
+            var bmp = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            var rect = new Rectangle(0, 0, width, height);
+            var bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
+            var arrRowLength = bmpData.Stride;
+            var ptr = bmpData.Scan0;
+            var buf = new byte[arrRowLength];
+            var w3 = width * 3;
+            for (var y = 0; y < height; y++)
+            {
+                var srcTop = y * w3;
+                for (var x = 0; x < w3; x += 3)
+                {
+                    buf[x] = src[srcTop + x];
+                    buf[x + 1] = src[srcTop + x + 1];
+                    buf[x + 2] = src[srcTop + x + 2];
+                }
+                Marshal.Copy(buf, 0, ptr, arrRowLength);
+                ptr += arrRowLength;
+            }
+            bmp.UnlockBits(bmpData);
+            return bmp;
+        }
+
+        private static Bitmap CtreateImageFromCMYK(byte[] src, int width, int height)
+        {
+            var bmp = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            var rect = new Rectangle(0, 0, width, height);
+            var bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
+            var arrRowLength = bmpData.Stride;
+            var ptr = bmpData.Scan0;
+            var buf = new byte[arrRowLength];
+            for (var y = 0; y < height; y++)
+            {
+                var x3 = 0;
+                var x4 = 0;
+                var srcTop = y * width * 4;
+                for (var x = 0; x < width; x++)
+                {
+                    (buf[x3 + 2], buf[x3 + 1], buf[x3]) = CmykToRgb(src[srcTop + x4], src[srcTop + x4 + 1], src[srcTop + x4 + 2], src[srcTop + x4 + 3]);
+                    x3 += 3;
+                    x4 += 4;
+                }
+                Marshal.Copy(buf, 0, ptr, arrRowLength);
+                ptr += arrRowLength;
+            }
+            bmp.UnlockBits(bmpData);
+            return bmp;
+        }
+
+        private static Bitmap CtreateImageFromGray(byte[] src, int width, int height)
+        {
+            var bmp = new Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format24bppRgb);
+            var rect = new Rectangle(0, 0, width, height);
+            var bmpData = bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, bmp.PixelFormat);
+            var arrRowLength = bmpData.Stride;
+            var ptr = bmpData.Scan0;
+            var buf = new byte[arrRowLength];
+            for (var y = 0; y < height; y++)
+            {
+                var srcTop = y * width;
+                for (var x = 0; x < width; x++)
+                {
+                    var c = src[srcTop + x];
+                    var x3 = x * 3;
+                    buf[x3] = c;
+                    buf[x3 + 1] = c;
+                    buf[x3 + 2] = c;
+                }
+                Marshal.Copy(buf, 0, ptr, arrRowLength);
+                ptr += arrRowLength;
+            }
+            bmp.UnlockBits(bmpData);
+            return bmp;
+        }
+        private static (byte r, byte g, byte b) CmykToRgb(byte c, byte m, byte y, byte k)
+        {
+            var r = (byte)((255 - c) * (255 - k) / 255);
+            var g = (byte)((255 - m) * (255 - k) / 255);
+            var b = (byte)((255 - y) * (255 - k) / 255);
+            return (r, g, b);
+        }
+
 
 
     }
