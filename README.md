@@ -1,3 +1,3 @@
 # PdfToJwwConverter
-PDFファイルJWWファイルへ変換します。
-JwwHelperとPdfUtilityの組み合わせで作成されました。
+PDFファイルJW_CADのJWWファイルへ変換します。
+JwwHelperとPdfUtilityを組み合わせて作成されました。
