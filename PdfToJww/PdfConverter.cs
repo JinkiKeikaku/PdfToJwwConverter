@@ -14,7 +14,6 @@ namespace PdfToJww
         public double CombineRate = 1.0;
         public double SpaceRate = 0.6;
 
-
         public PdfConverter()
         {
             var assemblyDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -36,14 +35,20 @@ namespace PdfToJww
         }
 
         /// <summary>
-        /// PDFの総ページ数を取得します。
+        /// Jwwファイルの縮尺表現。縮尺は(1/JwwScaleNumber)です。
         /// </summary>
-        /// <param name="pdfPath"></param>
-        /// <returns>総ページ数</returns>
-        /// <exception cref="Exception">
-        /// 暗号化されている場合、またページ数が取得できない場合は例外が発生します。
-        /// </exception>
-        public int GetPageSize(string pdfPath)
+        public double JwwScaleNumber { get; set; } = 1;
+
+
+/// <summary>
+/// PDFの総ページ数を取得します。
+/// </summary>
+/// <param name="pdfPath"></param>
+/// <returns>総ページ数</returns>
+/// <exception cref="Exception">
+/// 暗号化されている場合、またページ数が取得できない場合は例外が発生します。
+/// </exception>
+public int GetPageSize(string pdfPath)
         {
             using var pdfDoc = new PdfUtility.PdfDocument();
             pdfDoc.Open(new FileStream(pdfPath, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -78,6 +83,7 @@ namespace PdfToJww
             File.Delete(tmp);
 
             var jwwPaperSize = Helper.GetJwwPaperSize(writer.Header.m_nZumen);
+            writer.Header.m_adScale[0] = JwwScaleNumber;
 
             FitToPaper(page, jwwPaperSize, shapes);
             foreach (var shape in shapes)
@@ -91,7 +97,7 @@ namespace PdfToJww
         PdfPage ReadPage(PdfDocument doc, int pageNumber, List<PShape> shapes, bool combineText, bool unifyKanji)
         {
             //PDFは左下が原点
-            var page = doc.GetPage(pageNumber - 1);
+            var page = doc.GetPage(pageNumber);
             var graphicStack = new Stack<ContentsReader.GraphicState>();
             graphicStack.Push(new ContentsReader.GraphicState());
             var resource = page.ResourcesDictionary;
@@ -148,6 +154,8 @@ namespace PdfToJww
                         jw.m_start_y = line.P0.Y;
                         jw.m_end_x = line.P1.X;
                         jw.m_end_y = line.P1.Y;
+                        jw.m_nLayer = 0;
+                        jw.m_nGLayer = 0;
                         return jw;
                     }
                 case PTextShape text:
@@ -163,6 +171,8 @@ namespace PdfToJww
                         var p2 = text.P0 + CadPoint.Pole(text.Width, DegToRad(text.AngleDeg));
                         jw.m_end_x = p2.X;
                         jw.m_end_y = p2.Y;
+                        jw.m_nLayer = 0;
+                        jw.m_nGLayer = 0;
                         return jw;
                     }
                     case PImageShape image:
@@ -186,6 +196,8 @@ namespace PdfToJww
                             moji.m_end_x = moji.m_start_x + pe.X;
                             moji.m_end_y = moji.m_start_y + pe.Y;
                             moji.m_strFontName = "ＭＳ ゴシック";//決め打ち
+                            moji.m_nLayer = 0;
+                            moji.m_nGLayer = 0;
                             return moji;
                         }
                         return null;

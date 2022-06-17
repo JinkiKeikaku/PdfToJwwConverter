@@ -4,9 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Media;
 using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace PdfToJwwConverter
 {
@@ -16,7 +19,7 @@ namespace PdfToJwwConverter
     public partial class MainWindow : Window
     {
         string mPdfPath = "";
-
+        bool mConvertCancel = false;
         public MainWindow()
         {
             if (Properties.Settings.Default.IsUpgrade == false)
@@ -26,7 +29,6 @@ namespace PdfToJwwConverter
                 Debug.WriteLine(this, "Upgraded");
             }
             InitializeComponent();
-            Part_Convert.IsEnabled = false;
             DataContext = this;
         }
 
@@ -48,53 +50,116 @@ namespace PdfToJwwConverter
             set => Properties.Settings.Default.EnableOverwrite = value;
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        public JwwScale Scale {
+            get=> new JwwScale(Properties.Settings.Default.JwwScaleValue);
+            set => Properties.Settings.Default.JwwScaleValue = value.ScaleNumber;
+        }
+
+        public JwwScale[] ScaleList { get; } = new JwwScale[]
         {
-            var conv = new PdfConverter();
+            new (0.2),
+            new (0.5),
+            new (1),
+            new (2),
+            new (5),
+            new (10),
+            new (50),
+            new (100),
+            new (200),
+            new (500),
+            new (1000),
+        };
+
+
+        private async void Button_Click(object sender, RoutedEventArgs e)
+        {
+            mConvertCancel = false;
             try
             {
-                Part_Convert.IsEnabled = false;
+                Part_WaitingOverlay.Visibility = Visibility.Visible;
+                var conv = new PdfConverter();
+                conv.JwwScaleNumber = Scale.ScaleNumber;
                 int max = conv.GetPageSize(mPdfPath);
                 var range = PageRangeParser.ParsePageRange(Part_PageNumber.Text, max);
-
-                var sb = new StringBuilder();
-                if (range.Count == 0)
-                {
-                    sb.AppendLine("Converted no file.");
-                }
-                var count = 0;
+                var count = 1;
+                var createdCount = 0;
+                Part_Cancel.Visibility = Visibility.Visible;
+                Part_Progress.Visibility = Visibility.Visible;
+                Part_Progress.IsIndeterminate = true;
                 foreach (var i in range)
                 {
                     var jwwPath = GetJwwPath(i);
                     var isSkip = false;
                     if (!EnableOverwrite && File.Exists(jwwPath))
                     {
-                        if (MessageBox.Show(this, $"{jwwPath} is already exist.\nOverwrite?", "Confirmation", MessageBoxButton.YesNo) == MessageBoxResult.No)
+                        Part_Progress.IsIndeterminate = false;
+                        switch (MessageBox.Show(
+                            this, String.Format(Properties.Resources.OverwriteConfirm, jwwPath),
+                            Properties.Resources.Confirmation, MessageBoxButton.YesNoCancel, MessageBoxImage.Question))
                         {
-                            sb.AppendLine($"Skipped {jwwPath}");
-                            isSkip = true;
+                            case MessageBoxResult.Yes:
+                                break;
+                            case MessageBoxResult.No:
+                                isSkip = true;
+                                break;
+                            case MessageBoxResult.Cancel:
+                                mConvertCancel = true;
+                                break;
                         }
                     }
+                    Part_Progress.IsIndeterminate = true;
+                    if (mConvertCancel) break;
                     if (!isSkip)
                     {
-                        conv.Convert(mPdfPath, i, GetJwwPath(i), EnableCombineText, EnableUnifyKanji);
-                        sb.AppendLine($"Converted {jwwPath}");
-                        count++;
+                        SetMessage(String.Format(Properties.Resources.Converting, count,range.Count,jwwPath), 0);
+                        await Task.Run(() =>
+                        {
+                            conv.Convert(mPdfPath, i, GetJwwPath(i), EnableCombineText, EnableUnifyKanji);
+//                            Thread.Sleep(1000);
+                        });
+                        createdCount++;
                     }
+                    count++;
                 }
-                sb.AppendLine($"total {count} file was converted.");
-                MessageBox.Show(this, sb.ToString(), "Result");
+                if (mConvertCancel)
+                {
+                    SetMessage(Properties.Resources.Canceled, 3000);
+                }
+                else
+                {
+                    SetMessage(Properties.Resources.Completed, 3000);
+                }
             }
             catch (Exception ex)
             {
-                MessageBox.Show(this, ex.Message, "Error");
+                SetMessage($"Error! {ex.Message}", 4000);
+                SystemSounds.Beep.Play();
             }
             finally
             {
-                Part_Convert.IsEnabled = true;
+                Part_WaitingOverlay.Visibility = Visibility.Collapsed;
+                Part_Cancel.Visibility=Visibility.Hidden;
+                Part_Progress.Visibility = Visibility.Collapsed;
+                Part_Progress.IsIndeterminate = false;
+                mConvertCancel = false;
             }
         }
 
+        DispatcherTimer mMessageTimer = new();
+        void SetMessage(string message, int periodMS)
+        {
+            mMessageTimer.Stop();
+            if (periodMS > 0)
+            {
+                mMessageTimer.Tick += (s, args) =>
+                {
+                    Part_Message.Text = "";
+                };
+                mMessageTimer.Interval = TimeSpan.FromMilliseconds(periodMS);
+                mMessageTimer.Start();
+            }
+            Part_Message.Text = message;
+        }
 
         private string GetJwwPath(int pageNumber)
         {
@@ -110,8 +175,7 @@ namespace PdfToJwwConverter
             Part_PdfFile.Text = pdfPath;
             var conv = new PdfConverter();
             var a = conv.GetPageSize(pdfPath);
-            Part_PageRange.Text = $"Max {a}";
-            Part_Convert.IsEnabled = true;
+            Part_PageRange.Text = $" / {a}";
         }
 
         private void Window_Drop(object sender, DragEventArgs e)
@@ -156,6 +220,12 @@ namespace PdfToJwwConverter
             }
         }
 
+        private void Part_Cancel_Click(object sender, RoutedEventArgs e)
+        {
+            mConvertCancel = true;
+        }
+
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             SaveWindowBounds();
@@ -184,5 +254,6 @@ namespace PdfToJwwConverter
         {
             RecoverWindowBounds();
         }
+
     }
 }

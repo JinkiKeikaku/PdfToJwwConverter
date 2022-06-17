@@ -5,121 +5,145 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="clr-namespace:PdfToJwwConverter"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:properties="clr-namespace:PdfToJwwConverter.Properties"
     Title="PDF to JWW Converter"
     AllowDrop="True"
-    Drop="Window_Drop"
-    PreviewDragOver="Window_PreviewDragOver"
     Closing="Window_Closing"
+    Drop="Window_Drop"
     Loaded="Window_Loaded"
+    PreviewDragOver="Window_PreviewDragOver"
     SizeToContent="WidthAndHeight"
-    
     mc:Ignorable="d">
+
+
     <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Label
-            Grid.Row="0"
-            Grid.Column="0"
-            Margin="4"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Top"
-            Content="PDF" />
-        <StackPanel
-            Grid.Row="0"
-            Grid.Column="1"
-            Margin="8"
-            Orientation="Horizontal">
-            <TextBox
-                x:Name="Part_PdfFile"
-                Width="400"
-                Margin="4"
-                HorizontalAlignment="Left"
-                VerticalContentAlignment="Center"
-                IsReadOnly="true"
-                TextWrapping="Wrap" />
-            <Button
-                x:Name="Part_OpenPDF"
-                Width="32"
-                Margin="4"
-                Click="Part_OpenPDF_Click"
-                Content="..." />
-        </StackPanel>
-        <Label
-            Grid.Row="1"
-            Grid.Column="0"
-            Margin="4"
-            VerticalAlignment="Center"
-            Content="Page" />
-        <StackPanel
-            Grid.Row="1"
-            Grid.Column="1"
-            Margin="4"
-            Orientation="Horizontal">
-            <TextBox
-                x:Name="Part_PageNumber"
-                MinWidth="100"
-                Margin="4"
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="150.637" />
+                <ColumnDefinition Width="313.363"/>
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Label
+                Grid.Column="0"
+                Margin="4,0,0,0"
                 HorizontalAlignment="Left"
                 VerticalAlignment="Center"
-                Text="1" />
-            <TextBlock x:Name="Part_PageRange" Margin="4" />
-        </StackPanel>
-        <GroupBox
-            Grid.Row="2"
-            Grid.Column="0"
-            Grid.ColumnSpan="2"
-            Margin="16"
-            Header="Options">
-
-
-
-            <StackPanel Orientation="Vertical">
-                <CheckBox
-                    x:Name="Part_CombineText"
+                Content="PDF" />
+            <StackPanel
+                Grid.Row="0"
+                Grid.Column="1"
+                Margin="8,8,8,8"
+                Orientation="Horizontal" Grid.ColumnSpan="2">
+                <TextBox
+                    x:Name="Part_PdfFile"
+                    Width="400"
                     Margin="4"
-                    VerticalAlignment="Center"
-                    Content="Combine text"
-                    IsChecked="{Binding EnableCombineText}" />
-                <CheckBox
-                    x:Name="Part_UnifyKanji"
+                    HorizontalAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    IsReadOnly="true"
+                    TextWrapping="Wrap" />
+                <Button
+                    x:Name="Part_OpenPDF"
+                    Width="32"
                     Margin="4"
-                    VerticalAlignment="Center"
-                    Content="Unify kanji(for Japanese)"
-                    IsChecked="{Binding EnableUnifyKanji}" />
-                <CheckBox
-                    x:Name="Part_Overwrite"
-                    Margin="4"
-                    VerticalAlignment="Center"
-                    Content="Overwrite"
-                    IsChecked="{Binding EnableOverwrite}" />
-
+                    Click="Part_OpenPDF_Click"
+                    Content="..." />
             </StackPanel>
-        </GroupBox>
+            <Label
+                Grid.Row="1"
+                Grid.Column="0"
+                Margin="4,0,4,0"
+                VerticalAlignment="Center"
+                Content="{x:Static properties:Resources.Page}" />
+            <StackPanel
+                Grid.Row="1"
+                Orientation="Horizontal" Grid.ColumnSpan="3" Margin="45,0,0,34" Grid.RowSpan="2">
+                <TextBox
+                    x:Name="Part_PageNumber"
+                    MinWidth="60"
+                    Margin="4"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Text="1"
+                    ToolTip="{x:Static properties:Resources.PageNumberExplanation}" />
+                <TextBlock x:Name="Part_PageRange" Margin="4" />
+            </StackPanel>
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Margin="4,0,4,0"
+                VerticalAlignment="Center"
+                Content="{x:Static properties:Resources.Scale}" />
+            <ComboBox
+                x:Name="Part_Scale"
+                Grid.Row="2"
+                Grid.Column="1"
+                Margin="4,4,0,4"
+                HorizontalAlignment="Left"
+                MinWidth="60"
+                ItemsSource="{Binding ScaleList}"
+                SelectedItem="{Binding Scale}"
+                />
 
-        <Button
-            x:Name="Part_Convert"
-            Grid.Row="3"
-            Grid.Column="1"
-            Width="70"
-            Margin="8"
-            HorizontalAlignment="Right"
-            VerticalAlignment="Center"
-            Click="Button_Click"
-            Content="CONVERT"
-            IsDefault="True" />
 
-        <!--<StackPanel
+            <GroupBox
+                Grid.Row="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Margin="16,16,16,16"
+                Header="{x:Static properties:Resources.Options}">
+
+
+
+                <StackPanel Orientation="Vertical">
+                    <CheckBox
+                        x:Name="Part_CombineText"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        Content="{x:Static properties:Resources.CombineText}"
+                        IsChecked="{Binding EnableCombineText}" />
+                    <CheckBox
+                        x:Name="Part_UnifyKanji"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        Content="{x:Static properties:Resources.UnifyKanji}"
+                        IsChecked="{Binding EnableUnifyKanji}" />
+                    <CheckBox
+                        x:Name="Part_Overwrite"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        Content="{x:Static properties:Resources.Overwrite}"
+                        IsChecked="{Binding EnableOverwrite}" />
+
+                </StackPanel>
+            </GroupBox>
+
+            <Button
+                x:Name="Part_Convert"
+                Grid.Row="4"
+                Grid.Column="2"
+                Width="70"
+                Margin="235,0,0,0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center"
+                Click="Button_Click"
+                Content="{x:Static properties:Resources.Convert}"
+                IsDefault="True" />
+
+            <!--<StackPanel
             Grid.Row="4"
             Grid.ColumnSpan="2"
             Margin="10"
@@ -138,5 +162,44 @@
         </StackPanel>-->
 
 
+        </Grid>
+        <Rectangle
+            Grid.Row="0"
+            x:Name="Part_WaitingOverlay"
+            Fill="Black"
+            Opacity="0.05"
+            Visibility="Collapsed" />
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <ProgressBar
+                x:Name="Part_Progress"
+                Grid.Column="0"
+                Width="100"
+                Height="12"
+                Margin="4"
+                VerticalAlignment="Center"
+                IsIndeterminate="True"
+                Maximum="100"
+                Minimum="0"
+                Visibility="Collapsed" />
+            <TextBlock
+                x:Name="Part_Message"
+                Grid.Column="1"
+                VerticalAlignment="Center" />
+            <Button
+                x:Name="Part_Cancel"
+                Grid.Column="2"
+                Margin="8"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Center"
+                Click="Part_Cancel_Click"
+                Content="Cancel"
+                Visibility="Hidden" />
+        </Grid>
     </Grid>
 </Window>

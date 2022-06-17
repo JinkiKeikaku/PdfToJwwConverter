@@ -22,7 +22,7 @@ namespace PdfToJwwConverter.Properties {
     [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+    public class Resources {
         
         private static global::System.Resources.ResourceManager resourceMan;
         
@@ -36,7 +36,7 @@ namespace PdfToJwwConverter.Properties {
         ///   このクラスで使用されているキャッシュされた ResourceManager インスタンスを返します。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
+        public static global::System.Resources.ResourceManager ResourceManager {
             get {
                 if (object.ReferenceEquals(resourceMan, null)) {
                     global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("PdfToJwwConverter.Properties.Resources", typeof(Resources).Assembly);
@@ -51,12 +51,140 @@ namespace PdfToJwwConverter.Properties {
         ///   現在のスレッドの CurrentUICulture プロパティをオーバーライドします。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
+        public static global::System.Globalization.CultureInfo Culture {
             get {
                 return resourceCulture;
             }
             set {
                 resourceCulture = value;
+            }
+        }
+        
+        /// <summary>
+        ///   Cancel に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Cancel {
+            get {
+                return ResourceManager.GetString("Cancel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Canceled に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Canceled {
+            get {
+                return ResourceManager.GetString("Canceled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Combine text に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string CombineText {
+            get {
+                return ResourceManager.GetString("CombineText", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Completed に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Completed {
+            get {
+                return ResourceManager.GetString("Completed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Confirmation に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Confirmation {
+            get {
+                return ResourceManager.GetString("Confirmation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Convert に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Convert {
+            get {
+                return ResourceManager.GetString("Convert", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Converting...  ({0}/{1}) {2}&quot; に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Converting {
+            get {
+                return ResourceManager.GetString("Converting", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Options に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Options {
+            get {
+                return ResourceManager.GetString("Options", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Overwrite に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Overwrite {
+            get {
+                return ResourceManager.GetString("Overwrite", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   {0} is already exist.\nOverwrite? に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string OverwriteConfirm {
+            get {
+                return ResourceManager.GetString("OverwriteConfirm", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Page に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Page {
+            get {
+                return ResourceManager.GetString("Page", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Enter the page numbers or ranges separated by commas.
+        ///Example1: 1 Example2: 2, 3  Example3: 1-3
+        /// に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string PageNumberExplanation {
+            get {
+                return ResourceManager.GetString("PageNumberExplanation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Scale に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Scale {
+            get {
+                return ResourceManager.GetString("Scale", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Unify kanji(for Japanese) に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string UnifyKanji {
+            get {
+                return ResourceManager.GetString("UnifyKanji", resourceCulture);
             }
         }
     }

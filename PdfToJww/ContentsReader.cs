@@ -14,16 +14,12 @@ namespace PdfToJww
         {
             public TransformMatrix Ctm = new();
             public float StrokeWidth = 0.0f;
-            public System.Drawing.Color StrokeColor = System.Drawing.Color.Black;
-            public System.Drawing.Color FillColor = System.Drawing.Color.Black;
+            public Color StrokeColor = Color.Black;
+            public Color FillColor = Color.Black;
             public string FontName = "";
             public float FontSize = 4.0f;
             public double Tl = 5.0;
-
-            public GraphicState Copy()
-            {
-                return (GraphicState)MemberwiseClone();
-            }
+            public GraphicState Copy()=> (GraphicState)MemberwiseClone();
         }
 
         class TextParameter
@@ -113,10 +109,8 @@ namespace PdfToJww
                         CmdPlotBezier(GetPoint(list[^5], list[^4]), GetPoint(list[^3], list[^2]), GetPoint(list[^3], list[^2]));
                         break;
                     case "n":
-                        {
-                            mPath = null;
-                            mPathList.Clear();
-                        }
+                        mPath = null;
+                        mPathList.Clear();
                         break;
                     case "s":
                     case "S":
@@ -129,20 +123,11 @@ namespace PdfToJww
                     case "f":
                     case "F":
                     case "f*":
-                        //fもf*も同じとする（even/oddのみ）。
-                        {
-                            if (mPath != null) mPathList.Add(mPath);
-                            mPath = null;
-                            //未実装
-                            mPathList.Clear();
-                        }
+                        CmdFill(pid.Identifier, list, shapes);
                         break;
-
                     case "BT":
-                        {
-                            mIsTextState = true;
-                            mTextParameter = new();
-                        };
+                        mIsTextState = true;
+                        mTextParameter = new();
                         break;
                     case "TL":
                         mGS.Tl = GetDouble(list[^2]);
@@ -151,42 +136,8 @@ namespace PdfToJww
                         mGS.FontName = list[^3].ToString();
                         mGS.FontSize = (float)GetDouble(list[^2]);
                         break;
-
                     case "Do":
-                        {
-                            if (list[^2] is PdfName name)
-                            {
-                                var xobject = mDoc.GetXObjectStream(mResource, name.Name) ??
-                                    throw new Exception($"Do command, cannot find XObject {name.Name}");
-                                var subtype = xobject.Dictionary.GetValue<PdfName>("/Subtype")?.Name ??
-                                    throw new Exception($"Do command, cannot find Subtype of XObject.");
-                                switch (subtype)
-                                {
-                                    case "/Image":
-                                        {
-                                            var s = CreateImageShape(xobject!);
-                                            if (s != null) shapes.Add(s);
-                                        }
-                                        break;
-                                    case "/Form":
-                                        {
-                                            var buf = xobject.GetExtractedBytes();
-                                            if (buf == null) throw new Exception($"Form {name.Name} cannot get data.");
-                                            var xobjectResorce = mDoc.GetEntityObject<PdfDictionary>(xobject.Dictionary.GetValue("/Resources")) ?? mResource;
-                                            mGrashicStateStack.Push(mGS);
-                                            var formContentsReader = new ContentsReader(mDoc, xobjectResorce, mGrashicStateStack, mUnifyKanji);
-                                            var formShapes = formContentsReader.Read(buf);
-                                            foreach (var s in formShapes)
-                                            {
-                                                shapes.Add(s);
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        throw new Exception($"Do command not support XObject {subtype}.");
-                                }
-                            }
-                        }
+                        CmdDo(list, shapes);
                         break;
                     case "BI":
                         throw new Exception($"Sorry, BI command (Inline image) is not supported.");
@@ -312,6 +263,50 @@ namespace PdfToJww
                         break;
                 }
             });
+        }
+
+        void CmdFill(string cmd, List<PdfObject> list, List<PShape?> shapes)
+        {
+            if (mPath != null) mPathList.Add(mPath);
+            mPath = null;
+            //未実装
+            mPathList.Clear();
+        }
+
+        void CmdDo(List<PdfObject> list, List<PShape?> shapes)
+        {
+            if (list[^2] is PdfName name)
+            {
+                var xobject = mDoc.GetXObjectStream(mResource, name.Name) ??
+                    throw new Exception($"Do command, cannot find XObject {name.Name}");
+                var subtype = xobject.Dictionary.GetValue<PdfName>("/Subtype")?.Name ??
+                    throw new Exception($"Do command, cannot find Subtype of XObject.");
+                switch (subtype)
+                {
+                    case "/Image":
+                        {
+                            var s = CreateImageShape(xobject!);
+                            if (s != null) shapes.Add(s);
+                        }
+                        break;
+                    case "/Form":
+                        {
+                            var buf = xobject.GetExtractedBytes();
+                            if (buf == null) throw new Exception($"Form {name.Name} cannot get data.");
+                            var xobjectResorce = mDoc.GetEntityObject<PdfDictionary>(xobject.Dictionary.GetValue("/Resources")) ?? mResource;
+                            mGrashicStateStack.Push(mGS);
+                            var formContentsReader = new ContentsReader(mDoc, xobjectResorce, mGrashicStateStack, mUnifyKanji);
+                            var formShapes = formContentsReader.Read(buf);
+                            foreach (var s in formShapes)
+                            {
+                                shapes.Add(s);
+                            }
+                        }
+                        break;
+                    default:
+                        throw new Exception($"Do command not support XObject {subtype}.");
+                }
+            }
         }
 
         PImageShape? CreateImageShape(PdfStream xobject)
@@ -509,11 +504,9 @@ namespace PdfToJww
             }
             if (text != "")
             {
-                if (mUnifyKanji) text = PdfUtility.UnicodeHelper.UnifiedKanjiConverter(text);
+                if (mUnifyKanji) text = UnicodeHelper.UnifiedKanjiConverter(text);
                 var t = new PTextShape(text, new CadPoint(0, 0), mGS.FontSize, 0);
                 t.FontName = "ＭＳ ゴシック";
-                //文字の幅と高さを変換。ただし、ここまでしなくてもたいていは縦横同比なのでもっと単純化してもいいかも。
-                //たとえば行列式det(m1)の平方根を幅と高さにかけて角度はそのままなど。
                 t.P0.Y += dy * t.Height / 1000.0;
                 var w = t.Width;
                 t.Transform(mTextParameter.Tm);
@@ -524,28 +517,28 @@ namespace PdfToJww
             }
         }
 
-        System.Drawing.Color ConvertColor(PdfObject obj)
+        Color ConvertColor(PdfObject obj)
         {
             if (obj is not PdfNumber n)
             {
                 Debug.WriteLine($"Color is not number.{obj}");
-                return System.Drawing.Color.Black;
+                return Color.Black;
             }
             var c = (int)(n.DoubleValue * 255);
-            return System.Drawing.Color.FromArgb(c, c, c);
+            return Color.FromArgb(c, c, c);
         }
 
-        System.Drawing.Color ConvertColor(PdfObject ro, PdfObject go, PdfObject bo)
+        Color ConvertColor(PdfObject ro, PdfObject go, PdfObject bo)
         {
             if (ro is not PdfNumber rn || go is not PdfNumber gn || bo is not PdfNumber bn)
             {
                 Debug.WriteLine($"Color is not number.{ro} {bo} {go}");
-                return System.Drawing.Color.Black;
+                return Color.Black;
             }
             var r = (int)(rn.DoubleValue * 255);
             var g = (int)(gn.DoubleValue * 255);
             var b = (int)(bn.DoubleValue * 255);
-            return System.Drawing.Color.FromArgb(r, g, b);
+            return Color.FromArgb(r, g, b);
         }
 
         /*

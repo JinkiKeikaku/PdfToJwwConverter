@@ -243,7 +243,7 @@ namespace PdfToJww.CadMath2D
         /// <summary>
         /// ベクトルの長さで比較する
         /// </summary>
-        public int CompareTo(object obj)
+        public int CompareTo(object? obj)
         {
             if (obj == null) throw new ArgumentException("compare param is null");
             if (obj is CadPoint p)
