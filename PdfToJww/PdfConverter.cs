@@ -40,15 +40,15 @@ namespace PdfToJww
         public double JwwScaleNumber { get; set; } = 1;
 
 
-/// <summary>
-/// PDFの総ページ数を取得します。
-/// </summary>
-/// <param name="pdfPath"></param>
-/// <returns>総ページ数</returns>
-/// <exception cref="Exception">
-/// 暗号化されている場合、またページ数が取得できない場合は例外が発生します。
-/// </exception>
-public int GetPageSize(string pdfPath)
+        /// <summary>
+        /// PDFの総ページ数を取得します。
+        /// </summary>
+        /// <param name="pdfPath"></param>
+        /// <returns>総ページ数</returns>
+        /// <exception cref="Exception">
+        /// 暗号化されている場合、またページ数が取得できない場合は例外が発生します。
+        /// </exception>
+        public int GetPageSize(string pdfPath)
         {
             using var pdfDoc = new PdfUtility.PdfDocument();
             pdfDoc.Open(new FileStream(pdfPath, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -67,7 +67,7 @@ public int GetPageSize(string pdfPath)
         /// <exception cref="Exception">
         /// 暗号化されている場合、変換失敗時に例外が発生します。
         /// </exception>
-        public void Convert(string pdfPath, int pageNumber, string jwwPath, bool combineText, bool unifyKanji)
+        public void Convert(string pdfPath, int pageNumber, string jwwPath, int paperCode, bool combineText, bool unifyKanji)
         {
             using var pdfDoc = new PdfUtility.PdfDocument();
             pdfDoc.Open(new FileStream(pdfPath, FileMode.Open, FileAccess.Read, FileShare.Read));
@@ -82,10 +82,10 @@ public int GetPageSize(string pdfPath)
             writer.InitHeader(tmp);
             File.Delete(tmp);
 
-            var jwwPaperSize = Helper.GetJwwPaperSize(writer.Header.m_nZumen);
+            var jwwPaperSize = JwwPaper.GetJwwPaperSize(writer.Header.m_nZumen);
             writer.Header.m_adScale[0] = JwwScaleNumber;
 
-            FitToPaper(page, jwwPaperSize, shapes);
+            FitToPaper(page, jwwPaperSize.Width, jwwPaperSize.Height, shapes);
             foreach (var shape in shapes)
             {
                 var s = ConvertToJwwData(writer, shape);
@@ -117,7 +117,7 @@ public int GetPageSize(string pdfPath)
             return page;
         }
 
-        void FitToPaper(PdfPage page, CadSize paperSize, List<PShape> shapes)
+        void FitToPaper(PdfPage page, double paperWidth, double paperHeight, List<PShape> shapes)
         {
             var dpr = new CadPoint();
             var rotate = -page.Attribute.Rotate / 180.0 * Math.PI;
@@ -130,7 +130,7 @@ public int GetPageSize(string pdfPath)
             }
             var scale = 25.4 / 72.0;
             var p0 = new CadPoint(0, 0);
-            var dp = new CadPoint(paperSize.Width / 2.0, paperSize.Height / 2.0);
+            var dp = new CadPoint(paperWidth / 2.0, paperHeight / 2.0);
             foreach (var s in shapes)
             {
                 if (rotate != 0.0)
@@ -175,7 +175,7 @@ public int GetPageSize(string pdfPath)
                         jw.m_nGLayer = 0;
                         return jw;
                     }
-                    case PImageShape image:
+                case PImageShape image:
                     {
                         var (name, gzName, buffer) = CreateJwwImageInfo(image);
                         if (buffer != null)
@@ -253,9 +253,9 @@ public int GetPageSize(string pdfPath)
                         var dp = p2 - p1;
                         var dr = dp.Hypot();
                         if (dr < CombineRate * h)
-//                            if (FloatEQ(dp.Y, 0.0) && dr < CombineRate * h)
-                            {
-                                var t = s1.Text;
+                        //                            if (FloatEQ(dp.Y, 0.0) && dr < CombineRate * h)
+                        {
+                            var t = s1.Text;
                             if (dr > SpaceRate * h) t += " ";
                             s1.Text = t + s2.Text;
                             shapes[i] = s1;

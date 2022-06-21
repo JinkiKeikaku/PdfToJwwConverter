@@ -5,7 +5,7 @@ VisualStudioVersion = 17.2.32519.379
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PdfToJwwConverter", "PdfToJwwConverter\PdfToJwwConverter.csproj", "{794EB724-32FD-465C-A3FD-7E8EABCDF500}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PdfToJww", "PdfToJww\PdfToJww.csproj", "{A6F3624A-90BA-4376-8BEF-773081D04837}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PdfToJww", "PdfToJww\PdfToJww.csproj", "{A6F3624A-90BA-4376-8BEF-773081D04837}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

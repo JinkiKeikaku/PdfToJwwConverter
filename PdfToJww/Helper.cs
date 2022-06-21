@@ -39,17 +39,18 @@ namespace PdfToJww
             }
             return num.DoubleValue;
         }
-        /// <summary>
-        /// Jwwの図面コードを用紙サイズに変換
-        /// </summary>
-        static public CadSize GetJwwPaperSize(int code)
-        {
-            if (code < 15)
-            {
-                return mJwwPaperSizeArray[code];
-            }
-            return mJwwPaperSizeArray[3];    //わからなかったらひとまずA3
-        }
+
+        ///// <summary>
+        ///// Jwwの図面コードを用紙サイズに変換
+        ///// </summary>
+        //static public CadSize GetJwwPaperSize(int code)
+        //{
+        //    if (code < 15)
+        //    {
+        //        return mJwwPaperSizeArray[code];
+        //    }
+        //    return mJwwPaperSizeArray[3];    //わからなかったらひとまずA3
+        //}
 
         /// <summary>
         /// 画像のタイプ
@@ -83,23 +84,23 @@ namespace PdfToJww
 
         }
 
-        private static readonly CadSize[] mJwwPaperSizeArray = new CadSize[]{
-            new CadSize(1189.0, 841.0), //A0
-            new CadSize(841.0, 594.0),  //A1
-            new CadSize(594.0, 420.0),  //A2
-            new CadSize(420.0, 297.0),  //A3
-            new CadSize(297.0, 210.0),  //A4
-            new CadSize(210.0, 148.0),  //A5???使わない
-            new CadSize(210.0, 148.0),  //A6???使わない
-            new CadSize(148.0, 105.0),  //A7???使わない
-            new CadSize(1682.0, 1189.0),  //8:2A
-            new CadSize(2378.0, 1682.0),  //9:3A
-            new CadSize(3364.0, 2378.0),  //10:4A
-            new CadSize(4756.0, 3364.0),  //11:5A
-            new CadSize(10000.0, 7071.0),  //12:10m
-            new CadSize(50000.0, 35355.0),  //13:50m
-            new CadSize(100000.0, 70711.0)  //14:100m
-        };
+        //private static readonly CadSize[] mJwwPaperSizeArray = new CadSize[]{
+        //    new CadSize(1189.0, 841.0), //A0
+        //    new CadSize(841.0, 594.0),  //A1
+        //    new CadSize(594.0, 420.0),  //A2
+        //    new CadSize(420.0, 297.0),  //A3
+        //    new CadSize(297.0, 210.0),  //A4
+        //    new CadSize(210.0, 148.0),  //A5???使わない
+        //    new CadSize(210.0, 148.0),  //A6???使わない
+        //    new CadSize(148.0, 105.0),  //A7???使わない
+        //    new CadSize(1682.0, 1189.0),  //8:2A
+        //    new CadSize(2378.0, 1682.0),  //9:3A
+        //    new CadSize(3364.0, 2378.0),  //10:4A
+        //    new CadSize(4756.0, 3364.0),  //11:5A
+        //    new CadSize(10000.0, 7071.0),  //12:10m
+        //    new CadSize(50000.0, 35355.0),  //13:50m
+        //    new CadSize(100000.0, 70711.0)  //14:100m
+        //};
 
         private static Bitmap CtreateImageFromRGB(byte[] src, int width, int height)
         {

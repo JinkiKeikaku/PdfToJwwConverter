@@ -61,6 +61,15 @@ namespace PdfToJwwConverter.Properties {
         }
         
         /// <summary>
+        ///   PDF to JWW Converter に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string AppName {
+            get {
+                return ResourceManager.GetString("AppName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Cancel に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Cancel {
@@ -167,6 +176,35 @@ namespace PdfToJwwConverter.Properties {
         public static string PageNumberExplanation {
             get {
                 return ResourceManager.GetString("PageNumberExplanation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Paper に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Paper {
+            get {
+                return ResourceManager.GetString("Paper", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   (アイコン) に類似した型 System.Drawing.Icon のローカライズされたリソースを検索します。
+        /// </summary>
+        public static System.Drawing.Icon PdfToJww {
+            get {
+                object obj = ResourceManager.GetObject("PdfToJww", resourceCulture);
+                return ((System.Drawing.Icon)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Drawing.Bitmap のローカライズされたリソースを検索します。
+        /// </summary>
+        public static System.Drawing.Bitmap PdfToJww1 {
+            get {
+                object obj = ResourceManager.GetObject("PdfToJww1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
             }
         }
         

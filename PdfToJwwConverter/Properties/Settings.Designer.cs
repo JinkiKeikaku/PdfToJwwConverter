@@ -106,5 +106,17 @@ namespace PdfToJwwConverter.Properties {
                 this["JwwScaleValue"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public int JwwPaperCode {
+            get {
+                return ((int)(this["JwwPaperCode"]));
+            }
+            set {
+                this["JwwPaperCode"] = value;
+            }
+        }
     }
 }

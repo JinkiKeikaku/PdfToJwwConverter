@@ -1,12 +1,9 @@
 ﻿using Microsoft.Win32;
 using PdfToJww;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Media;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -29,6 +26,7 @@ namespace PdfToJwwConverter
                 Debug.WriteLine(this, "Upgraded");
             }
             InitializeComponent();
+            Title = $"{Properties.Resources.AppName} {GetAppVersion()}";
             DataContext = this;
         }
 
@@ -49,6 +47,18 @@ namespace PdfToJwwConverter
             get => Properties.Settings.Default.EnableOverwrite;
             set => Properties.Settings.Default.EnableOverwrite = value;
         }
+
+        public JwwPaper Paper
+        {
+            get => JwwPaper.GetJwwPaperSize(Properties.Settings.Default.JwwPaperCode);
+            set => Properties.Settings.Default.JwwPaperCode = value.Code;
+        }
+
+        public JwwPaper[] PaperList
+        {
+            get => JwwPaper.JwwPaperSizeArray; 
+        }
+
 
         public JwwScale Scale {
             get=> new JwwScale(Properties.Settings.Default.JwwScaleValue);
@@ -114,7 +124,7 @@ namespace PdfToJwwConverter
                         SetMessage(String.Format(Properties.Resources.Converting, count,range.Count,jwwPath), 0);
                         await Task.Run(() =>
                         {
-                            conv.Convert(mPdfPath, i, GetJwwPath(i), EnableCombineText, EnableUnifyKanji);
+                            conv.Convert(mPdfPath, i, GetJwwPath(i), Paper.Code, EnableCombineText, EnableUnifyKanji);
 //                            Thread.Sleep(1000);
                         });
                         createdCount++;
@@ -132,8 +142,9 @@ namespace PdfToJwwConverter
             }
             catch (Exception ex)
             {
-                SetMessage($"Error! {ex.Message}", 4000);
                 SystemSounds.Beep.Play();
+                SetMessage("Error!", 3000);
+                MessageBox.Show(ex.Message, "Error");
             }
             finally
             {
@@ -254,6 +265,24 @@ namespace PdfToJwwConverter
         {
             RecoverWindowBounds();
         }
+        private static string GetAppVersion()
+        {
+            var asm = System.Reflection.Assembly.GetExecutingAssembly();
+            //バージョンの取得
+            var v = asm?.GetName()?.Version;
+            if (v == null) return "";
+            return $"{v.Major}.{v.Minor}.{v.Revision}";
+        }
 
+        private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
+        {
+            Process.Start(
+                new ProcessStartInfo("cmd", $"/c start {e.Uri.ToString()}")
+                {
+                    CreateNoWindow = true,
+                    UseShellExecute=false,
+                }
+                );
+        }
     }
 }

@@ -161,4 +161,7 @@
   <data name="Scale" xml:space="preserve">
     <value>縮尺</value>
   </data>
+  <data name="Paper" xml:space="preserve">
+    <value>用紙</value>
+  </data>
 </root>
