@@ -265,13 +265,14 @@ namespace PdfToJwwConverter
         {
             RecoverWindowBounds();
         }
+
         private static string GetAppVersion()
         {
             var asm = System.Reflection.Assembly.GetExecutingAssembly();
             //バージョンの取得
             var v = asm?.GetName()?.Version;
             if (v == null) return "";
-            return $"{v.Major}.{v.Minor}.{v.Revision}";
+            return $"{v.Major}.{v.Minor}.{v.Build}";
         }
 
         private void Hyperlink_RequestNavigate(object sender, System.Windows.Navigation.RequestNavigateEventArgs e)
