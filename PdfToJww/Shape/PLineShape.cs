@@ -14,6 +14,7 @@ namespace PdfToJww.Shape
         public CadPoint P1 = new();
         public double StrokeWidth;
         public Color StrokeColor;
+        public float[] StrokePatttern = Array.Empty<float>();
 
         public PLineShape(CadPoint p0, CadPoint p1)
         {

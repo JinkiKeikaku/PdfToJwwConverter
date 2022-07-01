@@ -88,6 +88,15 @@ namespace PdfToJwwConverter.Properties {
         }
         
         /// <summary>
+        ///   Combine dashed line に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string CombineDashedLine {
+            get {
+                return ResourceManager.GetString("CombineDashedLine", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Combine text に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string CombineText {

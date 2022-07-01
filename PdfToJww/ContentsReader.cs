@@ -247,6 +247,7 @@ namespace PdfToJww
                         {
                             var line = new PLineShape(pl.P0, pl.P1);
                             line.Transform(mGS.Ctm);
+                            SetLineAttribute(line);
                             shapes.Add(line);
                         }
                         break;
@@ -257,6 +258,7 @@ namespace PdfToJww
                             {
                                 var line = new PLineShape(pts[i - 1], pts[i]);
                                 line.Transform(mGS.Ctm);
+                                SetLineAttribute(line);
                                 shapes.Add(line);
                             }
                         }
@@ -541,19 +543,23 @@ namespace PdfToJww
             return Color.FromArgb(r, g, b);
         }
 
+        void SetLineAttribute(PLineShape s)
+        {
+            //線幅などは拡大縮小による幅が変わらなけえればいけない。その係数がd。
+            //行列式の絶対値の平方根を係数とする。
+            var d = Math.Sqrt(Math.Abs(mGS.Ctm.A * mGS.Ctm.D - mGS.Ctm.B * mGS.Ctm.C));
+            s.StrokeColor = mGS.StrokeColor;
+            s.StrokeWidth = mGS.StrokeWidth * d;
+        }
+
+
         /*
-                        void SetLineAttribute(CadShape s)
+                        double GetLineWidth()
                         {
-                            //線幅などは拡大縮小による幅が変わらなけえればいけない。その係数がd。
+                            //線幅などは拡大縮小により幅が変わらなければいけない。その係数がd。
                             //行列式の絶対値の平方根を係数とする。
                             var d = Math.Sqrt(Math.Abs(mGS.Ctm.A * mGS.Ctm.D - mGS.Ctm.B * mGS.Ctm.C));
-                            s.SetAttribute(ShapeAttribute.ATTR_LINE_STYLE_WIDTH_FLOAT, (float)(mGS.StrokeWidth * d));
-                            s.SetAttribute(ShapeAttribute.ATTR_LINE_STYLE_COLOR, mGS.StrokeColor);
-                        }
-
-                        void SetSolidAttribute(CadShape s)
-                        {
-                            s.SetAttribute(ShapeAttribute.ATTR_SOLID_STYLE_COLOR, mGS.FillColor);
+                            return mGS.StrokeWidth * d;
                         }
         */
     }

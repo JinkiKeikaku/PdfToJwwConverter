@@ -164,4 +164,7 @@
   <data name="Paper" xml:space="preserve">
     <value>用紙</value>
   </data>
+  <data name="CombineDashedLine" xml:space="preserve">
+    <value>破線を結合する</value>
+  </data>
 </root>

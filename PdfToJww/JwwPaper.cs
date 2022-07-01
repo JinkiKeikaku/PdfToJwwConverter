@@ -7,7 +7,7 @@
             PaperName = paperName;
             Width = width;
             Height = height;
-            Code = Code;
+            Code = code;
         }
 
         public string PaperName { get; }

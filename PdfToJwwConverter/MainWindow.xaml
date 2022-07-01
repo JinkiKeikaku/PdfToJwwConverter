@@ -131,6 +131,12 @@
 
                 <StackPanel Orientation="Vertical">
                     <CheckBox
+                        x:Name="Part_CombineDashedLine"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        Content="{x:Static properties:Resources.CombineDashedLine}"
+                        IsChecked="{Binding EnableCombineDashedLine}" />
+                    <CheckBox
                         x:Name="Part_CombineText"
                         Margin="4"
                         VerticalAlignment="Center"

@@ -126,6 +126,9 @@
   <data name="Canceled" xml:space="preserve">
     <value>Canceled</value>
   </data>
+  <data name="CombineDashedLine" xml:space="preserve">
+    <value>Combine dashed line</value>
+  </data>
   <data name="CombineText" xml:space="preserve">
     <value>Combine text</value>
   </data>

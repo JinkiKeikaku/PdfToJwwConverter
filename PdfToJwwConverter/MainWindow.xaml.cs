@@ -30,6 +30,12 @@ namespace PdfToJwwConverter
             DataContext = this;
         }
 
+        public bool EnableCombineDashedLine
+        {
+            get => Properties.Settings.Default.EnableCombineDashedLine;
+            set => Properties.Settings.Default.EnableCombineDashedLine = value;
+        }
+
         public bool EnableCombineText
         {
             get => Properties.Settings.Default.EnableCombineText;
@@ -124,7 +130,10 @@ namespace PdfToJwwConverter
                         SetMessage(String.Format(Properties.Resources.Converting, count,range.Count,jwwPath), 0);
                         await Task.Run(() =>
                         {
-                            conv.Convert(mPdfPath, i, GetJwwPath(i), Paper.Code, EnableCombineText, EnableUnifyKanji);
+                            conv.Convert(
+                                mPdfPath, i, GetJwwPath(i), Paper.Code, 
+                                EnableCombineDashedLine,
+                                EnableCombineText, EnableUnifyKanji);
 //                            Thread.Sleep(1000);
                         });
                         createdCount++;

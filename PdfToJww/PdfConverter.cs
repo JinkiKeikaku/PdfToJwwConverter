@@ -25,7 +25,6 @@ namespace PdfToJww
                     {
                         string fileName = Path.Combine(assemblyDir,
                         string.Format("JwwHelper_{0}.dll", (IntPtr.Size == 4) ? "x86" : "x64"));
-                        //string.Format("ExchangeJww\\JwwHelper_{0}.dll", (IntPtr.Size == 4) ? "x86" : "x64"));
                         return Assembly.LoadFile(fileName);
                     }
                     return null;
@@ -67,14 +66,16 @@ namespace PdfToJww
         /// <exception cref="Exception">
         /// 暗号化されている場合、変換失敗時に例外が発生します。
         /// </exception>
-        public void Convert(string pdfPath, int pageNumber, string jwwPath, int paperCode, bool combineText, bool unifyKanji)
+        public void Convert(
+            string pdfPath, int pageNumber, string jwwPath, int paperCode, 
+            bool combineDashedLine, bool combineText, bool unifyKanji)
         {
             using var pdfDoc = new PdfUtility.PdfDocument();
             pdfDoc.Open(new FileStream(pdfPath, FileMode.Open, FileAccess.Read, FileShare.Read));
             if (pdfDoc.IsEncrypt()) throw new Exception("This PDF file is encrypted. So cannot open.");
 
             var shapes = new List<PShape>();
-            var page = ReadPage(pdfDoc, pageNumber, shapes, combineText, unifyKanji);
+            var page = ReadPage(pdfDoc, pageNumber, shapes, combineDashedLine, combineText, unifyKanji);
             var writer = new JwwHelper.JwwWriter();
             var tmp = Path.GetTempFileName();
             var buf = Properties.Resources.template;
@@ -82,6 +83,7 @@ namespace PdfToJww
             writer.InitHeader(tmp);
             File.Delete(tmp);
 
+            writer.Header.m_nZumen = paperCode;
             var jwwPaperSize = JwwPaper.GetJwwPaperSize(writer.Header.m_nZumen);
             writer.Header.m_adScale[0] = JwwScaleNumber;
 
@@ -94,7 +96,9 @@ namespace PdfToJww
             writer.Write(jwwPath);
         }
 
-        PdfPage ReadPage(PdfDocument doc, int pageNumber, List<PShape> shapes, bool combineText, bool unifyKanji)
+        PdfPage ReadPage(
+            PdfDocument doc, int pageNumber, List<PShape> shapes, 
+            bool combineDashedLine, bool combineText, bool unifyKanji)
         {
             //PDFは左下が原点
             var page = doc.GetPage(pageNumber);
@@ -108,6 +112,8 @@ namespace PdfToJww
                 {
                     var ss = contentsReader.Read(c);
                     if (combineText) CombineText(ss);
+                    if(combineDashedLine) CombineLine(ss);
+
                     foreach (var shape in ss)
                     {
                         if (shape != null) shapes.Add(shape);
@@ -156,6 +162,7 @@ namespace PdfToJww
                         jw.m_end_y = line.P1.Y;
                         jw.m_nLayer = 0;
                         jw.m_nGLayer = 0;
+                        jw.m_nPenStyle = (byte)LineHelper.GetNearLineType(line.StrokePatttern);
                         return jw;
                     }
                 case PTextShape text:
@@ -229,6 +236,11 @@ namespace PdfToJww
             return (name, gzName, dst.GetBuffer());
         }
 
+        void CombineLine(List<PShape?> shapes)
+        {
+            LineHelper.CombineLine(shapes); 
+
+        }
 
         void CombineText(List<PShape?> shapes)
         {

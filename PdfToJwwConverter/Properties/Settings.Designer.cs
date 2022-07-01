@@ -118,5 +118,17 @@ namespace PdfToJwwConverter.Properties {
                 this["JwwPaperCode"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableCombineDashedLine {
+            get {
+                return ((bool)(this["EnableCombineDashedLine"]));
+            }
+            set {
+                this["EnableCombineDashedLine"] = value;
+            }
+        }
     }
 }
