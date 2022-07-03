@@ -19,7 +19,7 @@ namespace PdfToJww
             var p3 = s.P3;
             var pts = Curve.CreateBezier3(p0, p1, p2, p3, 4, true);
             var cp = CadPointHelper.CreateCircleFrom3P(pts[0], pts[2], pts[^1]);
-            if (!double.IsNormal(cp.Radius) || !cp.Center.IsNormal()) return null;
+            if (!double.IsFinite(cp.Radius) || !cp.Center.IsFinite()) return null;
             var dr1 = (pts[1] - cp.Center).Hypot() - cp.Radius;
             var dr2 = (pts[^2] - cp.Center).Hypot() - cp.Radius;
             if (CadMath.FloatEQ(dr1, 0.0, mArcEpsilon) && CadMath.FloatEQ(dr2, 0.0, mArcEpsilon)) return cp;
@@ -118,7 +118,7 @@ namespace PdfToJww
             var p3 = s.P3;
             var pts = Curve.CreateBezier3(p0, p1, p2, p3, 4, true);
             var cp = CadPointHelper.CreateCircleFrom3P(pts[0], pts[2], pts[4]);
-            if (double.IsNormal(cp.Radius) && cp.Center.IsNormal() && !CadPoint.PointEQ(p0, p3))
+            if (double.IsFinite(cp.Radius) && cp.Center.IsFinite() && !CadPoint.PointEQ(p0, p3))
             {
                 var dr1 = (pts[1] - cp.Center).Hypot() - cp.Radius;
                 var dr2 = (pts[3] - cp.Center).Hypot() - cp.Radius;

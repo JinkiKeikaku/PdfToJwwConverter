@@ -74,13 +74,13 @@ namespace PdfToJww.CadMath2D
             return double.IsFinite(X) && double.IsFinite(Y);
         }
 
-        /// <summary>
-        /// 座標がNormalでtrue。
-        /// </summary>
-        public bool IsNormal()
-        {
-            return double.IsNormal(X) && double.IsNormal(Y);
-        }
+        ///// <summary>
+        ///// 座標がNormalでtrue。
+        ///// </summary>
+        //public bool IsNormal()
+        //{
+        //    return double.IsNormal(X) && double.IsNormal(Y);
+        //}
 
         /// <summary>
         /// 座標をオフセットする（this = this + dp）
