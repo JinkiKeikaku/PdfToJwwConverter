@@ -137,6 +137,12 @@
                         Content="{x:Static properties:Resources.CombineDashedLine}"
                         IsChecked="{Binding EnableCombineDashedLine}" />
                     <CheckBox
+                        x:Name="Part_CreateArc"
+                        Margin="4"
+                        VerticalAlignment="Center"
+                        Content="{x:Static properties:Resources.CreateArc}"
+                        IsChecked="{Binding EnableCreateArc}" />
+                    <CheckBox
                         x:Name="Part_CombineText"
                         Margin="4"
                         VerticalAlignment="Center"

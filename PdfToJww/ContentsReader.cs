@@ -253,14 +253,18 @@ namespace PdfToJww
                         break;
                     case PdfBezier b:
                         {
-                            var pts = Curve.CreateBezier3(b.P0, b.P1, b.P2, b.P3, mBezierDiv, true);
-                            for (var i = 1; i < pts.Count; i++)
-                            {
-                                var line = new PLineShape(pts[i - 1], pts[i]);
-                                line.Transform(mGS.Ctm);
-                                SetLineAttribute(line);
-                                shapes.Add(line);
-                            }
+                            var s = new PBezierShape(b.P0, b.P1, b.P2, b.P3);
+                            s.Transform(mGS.Ctm);
+                            SetLineAttribute(s);
+                            shapes.Add(s);
+                            //var pts = Curve.CreateBezier3(b.P0, b.P1, b.P2, b.P3, mBezierDiv, true);
+                            //for (var i = 1; i < pts.Count; i++)
+                            //{
+                            //    var line = new PLineShape(pts[i - 1], pts[i]);
+                            //    line.Transform(mGS.Ctm);
+                            //    SetLineAttribute(line);
+                            //    shapes.Add(line);
+                            //}
                         }
                         break;
                 }
@@ -544,6 +548,14 @@ namespace PdfToJww
         }
 
         void SetLineAttribute(PLineShape s)
+        {
+            //線幅などは拡大縮小による幅が変わらなけえればいけない。その係数がd。
+            //行列式の絶対値の平方根を係数とする。
+            var d = Math.Sqrt(Math.Abs(mGS.Ctm.A * mGS.Ctm.D - mGS.Ctm.B * mGS.Ctm.C));
+            s.StrokeColor = mGS.StrokeColor;
+            s.StrokeWidth = mGS.StrokeWidth * d;
+        }
+        void SetLineAttribute(PBezierShape s)
         {
             //線幅などは拡大縮小による幅が変わらなけえればいけない。その係数がd。
             //行列式の絶対値の平方根を係数とする。

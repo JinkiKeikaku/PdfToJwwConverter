@@ -142,6 +142,15 @@ namespace PdfToJwwConverter.Properties {
         }
         
         /// <summary>
+        ///   Create arc に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string CreateArc {
+            get {
+                return ResourceManager.GetString("CreateArc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Options に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Options {

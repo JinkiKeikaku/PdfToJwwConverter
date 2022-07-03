@@ -167,4 +167,7 @@
   <data name="CombineDashedLine" xml:space="preserve">
     <value>破線を結合する</value>
   </data>
+  <data name="CreateArc" xml:space="preserve">
+    <value>円・円弧を生成する</value>
+  </data>
 </root>

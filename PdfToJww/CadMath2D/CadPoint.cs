@@ -75,6 +75,14 @@ namespace PdfToJww.CadMath2D
         }
 
         /// <summary>
+        /// 座標がNormalでtrue。
+        /// </summary>
+        public bool IsNormal()
+        {
+            return double.IsNormal(X) && double.IsNormal(Y);
+        }
+
+        /// <summary>
         /// 座標をオフセットする（this = this + dp）
         /// </summary>
         public void Offset(CadPoint dp)

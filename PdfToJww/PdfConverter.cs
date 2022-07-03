@@ -6,11 +6,28 @@ using PdfToJww.CadMath2D;
 using PdfToJww.Shape;
 using System.IO.Compression;
 using JwwHelper;
+using System.Diagnostics;
 
 namespace PdfToJww
 {
     public class PdfConverter
     {
+        public class ConvertOptions
+        {
+            public bool CombineDashedLine;
+            public bool CreateArc;
+            public bool CombineText;
+            public bool UnifyKanji;
+
+            public ConvertOptions(bool combineDashedLine, bool createArc, bool combineText, bool unifyKanji)
+            {
+                CombineDashedLine = combineDashedLine;
+                CreateArc = createArc;
+                CombineText = combineText;
+                UnifyKanji = unifyKanji;
+            }
+        }
+
         public double CombineRate = 1.0;
         public double SpaceRate = 0.6;
 
@@ -67,15 +84,14 @@ namespace PdfToJww
         /// 暗号化されている場合、変換失敗時に例外が発生します。
         /// </exception>
         public void Convert(
-            string pdfPath, int pageNumber, string jwwPath, int paperCode, 
-            bool combineDashedLine, bool combineText, bool unifyKanji)
+            string pdfPath, int pageNumber, string jwwPath, int paperCode, ConvertOptions options)
         {
             using var pdfDoc = new PdfUtility.PdfDocument();
             pdfDoc.Open(new FileStream(pdfPath, FileMode.Open, FileAccess.Read, FileShare.Read));
             if (pdfDoc.IsEncrypt()) throw new Exception("This PDF file is encrypted. So cannot open.");
 
             var shapes = new List<PShape>();
-            var page = ReadPage(pdfDoc, pageNumber, shapes, combineDashedLine, combineText, unifyKanji);
+            var page = ReadPage(pdfDoc, pageNumber, shapes, options);
             var writer = new JwwHelper.JwwWriter();
             var tmp = Path.GetTempFileName();
             var buf = Properties.Resources.template;
@@ -90,29 +106,28 @@ namespace PdfToJww
             FitToPaper(page, jwwPaperSize.Width, jwwPaperSize.Height, shapes);
             foreach (var shape in shapes)
             {
-                var s = ConvertToJwwData(writer, shape);
-                if (s != null) writer.AddData(s);
+                AddConvertedJwwData(writer, shape);
+                //                if (s != null) writer.AddData(s);
             }
             writer.Write(jwwPath);
         }
 
-        PdfPage ReadPage(
-            PdfDocument doc, int pageNumber, List<PShape> shapes, 
-            bool combineDashedLine, bool combineText, bool unifyKanji)
+        PdfPage ReadPage(PdfDocument doc, int pageNumber, List<PShape> shapes, ConvertOptions options)
         {
             //PDFは左下が原点
             var page = doc.GetPage(pageNumber);
             var graphicStack = new Stack<ContentsReader.GraphicState>();
             graphicStack.Push(new ContentsReader.GraphicState());
             var resource = page.ResourcesDictionary;
-            var contentsReader = new ContentsReader(doc, resource, graphicStack, unifyKanji);
+            var contentsReader = new ContentsReader(doc, resource, graphicStack, options.UnifyKanji);
             foreach (var c in page.ContentsList)
             {
                 if (c != null)
                 {
                     var ss = contentsReader.Read(c);
-                    if (combineText) CombineText(ss);
-                    if(combineDashedLine) CombineLine(ss);
+                    if(options.CreateArc)   ArcHelper.ConvertArc(ss);
+                    if (options.CombineText) CombineText(ss);
+                    if (options.CombineDashedLine) CombineLine(ss);
 
                     foreach (var shape in ss)
                     {
@@ -149,7 +164,7 @@ namespace PdfToJww
             }
         }
 
-        JwwHelper.JwwData? ConvertToJwwData(JwwWriter writer, PShape shape)
+        void AddConvertedJwwData(JwwWriter writer, PShape shape)
         {
             switch (shape)
             {
@@ -163,8 +178,49 @@ namespace PdfToJww
                         jw.m_nLayer = 0;
                         jw.m_nGLayer = 0;
                         jw.m_nPenStyle = (byte)LineHelper.GetNearLineType(line.StrokePatttern);
-                        return jw;
+                        Debug.WriteLine(jw.m_nPenStyle.ToString());
+
+                        writer.AddData(jw);
                     }
+                    break;
+
+                case PArcShape arc:
+                    {
+                        var jw = new JwwHelper.JwwEnko();
+                        jw.m_start_x = arc.P0.X;
+                        jw.m_start_y = arc.P0.Y;
+                        jw.m_bZenEnFlg = CadMath.FloatEQ(arc.SweepAngle, 360) ? 1 : 0;
+                        jw.m_dHankei = arc.Radius;
+                        jw.m_dHenpeiRitsu = arc.Flatness;
+                        jw.m_radKatamukiKaku = DegToRad(arc.Angle);
+                        jw.m_radKaishiKaku = DegToRad(arc.StartAngle);
+                        jw.m_radEnkoKaku = DegToRad(arc.SweepAngle);
+                        jw.m_nLayer = 0;
+                        jw.m_nGLayer = 0;
+                        jw.m_nPenStyle = (byte)LineHelper.GetNearLineType(arc.StrokePatttern);
+                        writer.AddData(jw);
+                    }
+                    break;
+
+                case PBezierShape bezier:
+                    {
+                        var pt = Curve.CreateBezier3(bezier.P0, bezier.P1, bezier.P2, bezier.P3, 16, true);
+                        for (var i = 0; i < pt.Count - 1; i++)
+                        {
+                            var p0 = pt[i];
+                            var p1 = pt[i + 1];
+                            var jw = new JwwHelper.JwwSen();
+                            jw.m_start_x = p0.X;
+                            jw.m_start_y = p0.Y;
+                            jw.m_end_x = p1.X;
+                            jw.m_end_y = p1.Y;
+                            jw.m_nLayer = 0;
+                            jw.m_nGLayer = 0;
+                            jw.m_nPenStyle = (byte)LineHelper.GetNearLineType(bezier.StrokePatttern);
+                            writer.AddData(jw);
+                        }
+                    }
+                    break;
                 case PTextShape text:
                     {
                         var jw = new JwwHelper.JwwMoji();
@@ -180,8 +236,9 @@ namespace PdfToJww
                         jw.m_end_y = p2.Y;
                         jw.m_nLayer = 0;
                         jw.m_nGLayer = 0;
-                        return jw;
+                        writer.AddData(jw);
                     }
+                    break;
                 case PImageShape image:
                     {
                         var (name, gzName, buffer) = CreateJwwImageInfo(image);
@@ -205,12 +262,11 @@ namespace PdfToJww
                             moji.m_strFontName = "ＭＳ ゴシック";//決め打ち
                             moji.m_nLayer = 0;
                             moji.m_nGLayer = 0;
-                            return moji;
+                            writer.AddData(moji);
                         }
-                        return null;
                     }
+                    break;
             }
-            return null;
         }
 
         static int mImageNameIndex = 0;
@@ -238,7 +294,7 @@ namespace PdfToJww
 
         void CombineLine(List<PShape?> shapes)
         {
-            LineHelper.CombineLine(shapes); 
+            LineHelper.CombineLine(shapes);
 
         }
 

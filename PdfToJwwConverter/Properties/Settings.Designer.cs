@@ -130,5 +130,17 @@ namespace PdfToJwwConverter.Properties {
                 this["EnableCombineDashedLine"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EnableCreateArc {
+            get {
+                return ((bool)(this["EnableCreateArc"]));
+            }
+            set {
+                this["EnableCreateArc"] = value;
+            }
+        }
     }
 }

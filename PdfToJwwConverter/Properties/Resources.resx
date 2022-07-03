@@ -145,6 +145,9 @@
     <value>Converting...  ({0}/{1}) {2}"</value>
     <comment>0:page 1:max 2:pathname</comment>
   </data>
+  <data name="CreateArc" xml:space="preserve">
+    <value>Create arc</value>
+  </data>
   <data name="Options" xml:space="preserve">
     <value>Options</value>
   </data>
