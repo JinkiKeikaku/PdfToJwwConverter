@@ -31,6 +31,7 @@ namespace PdfToJww
                     }
                     continue;
                 }
+                if (shape0 == null) continue;
                 var w = shape0.StrokeWidth;
                 var gapMax = mGapMax / mPdfUnitScale;
                 if (CombineLineStyleCheck(shape0, s2) && CombineLineLengthCheck(s2))
@@ -61,9 +62,10 @@ namespace PdfToJww
                     }
                 }
                 CombineLineMake(buffer, shapes, shape0, p0, p1);
+                shape0 = null;
                 i++;
             }
-            CombineLineMake(buffer, shapes, shape0, p0, p1);
+            if (shape0 != null)  CombineLineMake(buffer, shapes, shape0, p0, p1);
         }
 
         static bool CombineLineLengthCheck(PLineShape s1)
