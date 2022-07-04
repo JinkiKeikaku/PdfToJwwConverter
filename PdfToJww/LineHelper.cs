@@ -62,6 +62,7 @@ namespace PdfToJww
                     }
                 }
                 CombineLineMake(buffer, shapes, shape0, p0, p1);
+                buffer.Clear();
                 shape0 = null;
                 i++;
             }
@@ -120,7 +121,6 @@ namespace PdfToJww
                 shape0.StrokePatttern = la.ToArray();
                 shapes[buffer.First().Item1] = shape0;
             }
-            buffer.Clear();
         }
 
         static float[][] mJwwLinePattern = new float[][] {
